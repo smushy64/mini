@@ -9,14 +9,15 @@ This is a collection of header-only C++ libraries.
 
 ## Libraries
 
-| name                | description                                                           |
-| ------------------- | --------------------------------------------------------------------- |
-| `mini-containers.h` | Slices and buffers                                                    |
-| `mini-fmt.h`        | Text formatting. Depends on `mini-containers.h`                       |
-| `mini-io.h`         | Files and pipes. Depends on `mini-containers.h`                       |
-| `mini-proc.h`       | Processes. Depends on `mini-io.h` and `mini-containers.h`             |
-| `mini-log.h`        | Logging. Depends on `mini-io.h`, `mini-containers.h` and `mini-fmt.h` |
-| `mini-math.h`       | Math                                                                  |
+| name                | description                                                                |
+| ------------------- | -------------------------------------------------------------------------- |
+| `mini-containers.h` | Slices and buffers                                                         |
+| `mini-string.h`     | Strings. Depends on `mini-containers.h`                                    |
+| `mini-fmt.h`        | Text formatting. Depends on `mini-containers.h` and `mini-string.h`        |
+| `mini-io.h`         | Files and pipes. Depends on `mini-containers.h` and `mini-string.h`        |
+| `mini-proc.h`       | Processes. Depends on `mini-io.h`, `mini-containers.h` and `mini-string.h` |
+| `mini-log.h`        | Logging. Depends on `mini-io.h`, `mini-containers.h`, `mini-string.h` and `mini-fmt.h` |
+| `mini-math.h`       | Math                                                                       |
 
 [^1]: Recommended, bundle script will bring in dependencies.
 

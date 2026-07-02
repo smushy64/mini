@@ -19,21 +19,29 @@ for arg in "$@"; do
         containers)
             add_unique $arg
             ;;
+        string)
+            add_unique containers
+            add_unique $arg
+            ;;
         fmt)
             add_unique containers
+            add_unique string
             add_unique $arg
             ;;
         io)
             add_unique containers
+            add_unique string
             add_unique $arg
             ;;
         proc)
             add_unique containers
+            add_unique string
             add_unique io
             add_unique $arg
             ;;
         log)
             add_unique containers
+            add_unique string
             add_unique fmt
             add_unique io
             add_unique $arg
