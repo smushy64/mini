@@ -410,6 +410,12 @@ struct Slice {
     constexpr inline
     Slice<Type> operator+(size_t adv) const;
 
+    /// @brief Advance by given number of items.
+    /// @param adv Number of items to advance by.
+    /// @return Slice.
+    constexpr inline
+    Slice<Type>& operator+=(size_t adv);
+
     /// @brief Advance this slice by given number of items.
     /// @return Reference to self.
     constexpr inline
@@ -490,6 +496,12 @@ struct Slice<char> {
     /// @return Slice.
     constexpr inline
     Slice<Type> operator+(size_t adv) const;
+
+    /// @brief Advance by given number of items.
+    /// @param adv Number of items to advance by.
+    /// @return Slice.
+    constexpr inline
+    Slice<Type>& operator+=(size_t adv);
 
     /// @brief Advance this slice by given number of items.
     /// @return Reference to self.
@@ -572,6 +584,12 @@ struct Slice<wchar_t> {
     constexpr inline
     Slice<Type> operator+(size_t adv) const;
 
+    /// @brief Advance by given number of items.
+    /// @param adv Number of items to advance by.
+    /// @return Slice.
+    constexpr inline
+    Slice<Type>& operator+=(size_t adv);
+
     /// @brief Advance this slice by given number of items.
     /// @return Reference to self.
     constexpr inline
@@ -652,6 +670,12 @@ struct Slice<char32_t> {
     /// @return Slice.
     constexpr inline
     Slice<Type> operator+(size_t adv) const;
+
+    /// @brief Advance by given number of items.
+    /// @param adv Number of items to advance by.
+    /// @return Slice.
+    constexpr inline
+    Slice<Type>& operator+=(size_t adv);
 
     /// @brief Advance this slice by given number of items.
     /// @return Reference to self.
@@ -942,6 +966,11 @@ Slice<T> Slice<T>::operator+(size_t adv) const {
 }
 
 template<typename T> constexpr inline
+Slice<T>& Slice<T>::operator+=(size_t adv) {
+    return *this = this->operator+(adv);
+}
+
+template<typename T> constexpr inline
 Slice<T>& Slice<T>::operator++() {
     return *this = this->operator+(1);
 }
@@ -1023,6 +1052,11 @@ Slice<char> Slice<char>::operator+(size_t adv) const {
     result.len = this->len - adv;
     result.ptr = remove_const.ptr + adv;
     return result;
+}
+
+constexpr inline
+Slice<char>& Slice<char>::operator+=(size_t adv) {
+    return *this = this->operator+(adv);
 }
 
 constexpr inline
@@ -1110,6 +1144,11 @@ Slice<wchar_t> Slice<wchar_t>::operator+(size_t adv) const {
 }
 
 constexpr inline
+Slice<wchar_t>& Slice<wchar_t>::operator+=(size_t adv) {
+    return *this = this->operator+(adv);
+}
+
+constexpr inline
 Slice<wchar_t>& Slice<wchar_t>::operator++() {
     return *this = this->operator+(1);
 }
@@ -1191,6 +1230,11 @@ Slice<char32_t> Slice<char32_t>::operator+(size_t adv) const {
     result.len = this->len - adv;
     result.ptr = remove_const.ptr + adv;
     return result;
+}
+
+constexpr inline
+Slice<char32_t>& Slice<char32_t>::operator+=(size_t adv) {
+    return *this = this->operator+(adv);
 }
 
 constexpr inline
@@ -1335,6 +1379,8 @@ void shrink(Buffer<T>& b) {
     Buffer<T> new_buf = buffer_alloc(b.len);
     memcpy(new_buf.ptr, b.ptr, sizeof(T) * b.len);
     new_buf.len = b.len;
+
+    free(b.ptr);
 
     b = new_buf;
 }
