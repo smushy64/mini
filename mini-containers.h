@@ -7,6 +7,7 @@
  * @date   July 01, 2026
 */
 #include <stddef.h> // size_t
+#include <stdint.h> // intptr_t
 #include <stdlib.h> // calloc, realloc, free
 #include <string.h> // memset, memcpy, memmove
 #if defined(MINI_ENABLE_ASSERTIONS)
@@ -37,11 +38,37 @@ struct Array;
 template<typename T>
 struct Option;
 
+/// @brief Comparison function result.
+enum class CmpResult : int;
+
+/// @brief Comparison function prototype.
+/// @param[in] a, b   Values to be compared.
+/// @param[in] params Optional parameters to this function.
+/// @return Comparison result.
+typedef CmpResult CmpFn(const void *a, const void *b, void *params);
+
 /// @brief Get number of items in array.
 /// @param[in] array Array to get length of.
 /// @return Length of @c array.
 template<typename T, size_t N> constexpr inline
 size_t len(const T (&array)[N]);
+
+/// @brief Sort items.
+/// @param     len        Number of items.
+/// @param[in] ptr        Pointer to items.
+/// @param[in] cmpfn      Comparison function.
+/// @param[in] params     Parameters to comparison function.
+/// @param     is_reverse If should sort in reverse order.
+template<typename T> inline
+void quicksort(size_t len, T *ptr, CmpFn *cmpfn,
+    void *params = nullptr, bool is_reverse = false);
+
+/// @brief Standard comparison function.
+/// @param[in] a, b   Pointers to items.
+/// @param[in] params Unused.
+/// @return Comparison result.
+template<typename T, typename U = T> inline
+CmpResult cmp_standard(const void *a, const void *b, void *params);
 
 /// @brief Create a slice.
 /// @param     len Number of items in slice.
@@ -86,6 +113,14 @@ Slice<T> advance(Slice<T> s, size_t amount = 1);
 /// @param value Value to set items.
 template<typename T> inline
 void set(Slice<T>& s, const T& value);
+
+/// @brief Sort items.
+/// @param     s          Items.
+/// @param[in] cmpfn      Comparison function.
+/// @param[in] params     Parameters to comparison function.
+/// @param     is_reverse If should sort in reverse order.
+template<typename T> inline
+void quicksort(Slice<T> s, CmpFn *cmpfn, void *params = nullptr, bool is_reverse = false);
 
 /// @brief Allocate a new buffer.
 /// @param amount Number of items in buffer.
@@ -852,12 +887,86 @@ struct Option {
     operator bool() const;
 };
 
+enum class CmpResult : int {
+    /// @brief @c a is less than @c b.
+    LT = -1,
+    /// @brief @c a is equal to @c b.
+    EQ =  0,
+    /// @brief @c a is greater than @c b.
+    GT =  1,
+};
+
 // NOTE(alicia): implementation
 
 template<typename T, size_t N> constexpr inline
 size_t len(const T (&array)[N]) {
     (void)array;
     return N;
+}
+
+template<typename T> inline
+intptr_t __quicksort_partition(
+    intptr_t lo, intptr_t hi, T *ptr, CmpFn *cmpfn, void *params, bool is_reverse
+) {
+    T *pivot = ptr + hi;
+
+    intptr_t i = lo - 1;
+
+    for(intptr_t j = lo; j <= hi - 1; ++j) {
+        T *at_j = ptr + j;
+
+        CmpResult cmpres = cmpfn(pivot, at_j, params);
+
+        if(is_reverse ? cmpres == CmpResult::LT : cmpres == CmpResult::GT) {
+            T *at_i = ptr + ++i;
+
+            T tmp = *at_j;
+            *at_j = *at_i;
+            *at_i = tmp;
+        }
+    }
+
+    T tmp = *(ptr + (i + 1));
+    *(ptr + (i + 1)) = *(ptr + hi);
+    *(ptr + hi)      = tmp;
+
+    return i + 1;
+}
+
+template<typename T> inline
+void quicksort(size_t len, T *ptr, CmpFn *cmpfn, void *params, bool is_reverse) {
+    if(!len) {
+        return;
+    }
+
+    intptr_t from = 0;
+    intptr_t to   = len - 1;
+
+    while(from < to) {
+        intptr_t part = __quicksort_partition(from, to, ptr, cmpfn, params, is_reverse);
+
+        if((part - from) < (to - part)) {
+            quicksort(part - from, ptr + from, cmpfn, params, is_reverse);
+            from = part + 1;
+        } else {
+            quicksort(to - (part + 1), ptr + (part + 1), cmpfn, params, is_reverse);
+            to = part - 1;
+        }
+    }
+}
+
+template<typename T, typename U> inline
+CmpResult cmp_standard(const void *a, const void *b, void *params) {
+    const T *_a = (const T *)a;
+    const U *_b = (const U *)b;
+
+    if(*_a < *_b) {
+        return CmpResult::LT;
+    } else if(*_a > *_b) {
+        return CmpResult::GT;
+    } else {
+        return CmpResult::EQ;
+    }
 }
 
 // NOTE(alicia): impl:Slice
@@ -1269,6 +1378,11 @@ void set(Slice<T>& s, const T& value) {
     for(auto& v : s) {
         v = value;
     }
+}
+
+template<typename T> inline
+void quicksort(Slice<T> s, CmpFn *cmpfn, void *params, bool is_reverse) {
+    quicksort(s.len, s.ptr, cmpfn, params, is_reverse);
 }
 
 // NOTE(alicia): impl:Buffer
