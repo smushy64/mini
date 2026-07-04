@@ -38,6 +38,11 @@ struct Array;
 template<typename T>
 struct Option;
 
+/// @brief Multiple values together.
+/// @tparam Ts Types of values.
+template<typename... Ts>
+struct Tuple;
+
 /// @brief Comparison function result.
 enum class CmpResult : int;
 
@@ -397,6 +402,30 @@ Array<T,N> array();
 /// @return Array.
 template<typename First, typename... Rest> constexpr inline
 Array<First,(1 + sizeof...(Rest))> array(First first, Rest... rest);
+
+/// @brief Create a tuple.
+/// @return Tuple.
+template<typename First, typename... Rest> constexpr inline
+Tuple<First, Rest...> tuple();
+
+/// @brief Create a tuple.
+/// @param first First value.
+/// @param rest  Rest of values.
+/// @return Tuple.
+template<typename First, typename... Rest> constexpr inline
+Tuple<First, Rest...> tuple(First first, Rest... rest);
+
+/// @brief Get value at given index.
+/// @param t Tuple.
+/// @return Value.
+template<size_t Which, typename First, typename... Rest> constexpr inline
+const auto& get(const Tuple<First, Rest...>& t);
+
+/// @brief Get value at given index.
+/// @param t Tuple.
+/// @return Value.
+template<size_t Which, typename First, typename... Rest> constexpr inline
+auto& get(Tuple<First, Rest...>& t);
 
 // NOTE(alicia): struct definitions
 
@@ -885,6 +914,17 @@ struct Option {
     /// @return True if option is valid.
     constexpr inline
     operator bool() const;
+};
+
+template<typename First, typename... Rest>
+struct Tuple<First, Rest...> {
+    First          value;
+    Tuple<Rest...> rest;
+};
+
+template<typename T>
+struct Tuple<T> {
+    T value;
 };
 
 enum class CmpResult : int {
@@ -1839,6 +1879,45 @@ T *Array<T,N>::begin() {
 template<typename T, size_t N> constexpr inline
 T *Array<T,N>::end() {
     return this->ptr + this->len;
+}
+
+// NOTE(alicia): impl:Tuple
+
+template<typename First, typename... Rest> constexpr inline
+Tuple<First, Rest...> tuple() {
+    union {
+        char bytes[sizeof(Tuple<First, Rest...>)] = {0};
+        Tuple<First, Rest...> t;
+    } result = {};
+    return result.t;
+}
+
+template<typename First, typename... Rest> constexpr inline
+Tuple<First, Rest...> tuple(First first, Rest... rest) {
+    Tuple<First, Rest...> result = tuple<First, Rest...>();
+    result.value = first;
+    if constexpr (sizeof...(rest)) {
+        result.rest  = tuple(rest...);
+    }
+    return result;
+}
+
+template<size_t Which, typename First, typename... Rest> constexpr inline
+const auto& get(const Tuple<First, Rest...>& t) {
+    if constexpr (Which) {
+        return get<Which-1, Rest...>(t.rest);
+    } else {
+        return t.value;
+    }
+}
+
+template<size_t Which, typename First, typename... Rest> constexpr inline
+auto& get(Tuple<First, Rest...>& t) {
+    if constexpr (Which) {
+        return get<Which-1, Rest...>(t.rest);
+    } else {
+        return t.value;
+    }
 }
 
 #undef MINI_ASSERT
