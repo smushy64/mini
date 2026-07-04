@@ -113,6 +113,20 @@ Slice<T> slice(const Array<T,N>& array, size_t from = 0, size_t to = N);
 template<typename T> constexpr inline
 Slice<T> advance(Slice<T> s, size_t amount = 1);
 
+/// @brief Limit slice to given length.
+/// @param s       Slice to truncate.
+/// @param maximum Maximum number of items in slice.
+/// @return Truncated slice.
+template<typename T> constexpr inline
+Slice<T> truncate(Slice<T> s, size_t maximum);
+
+/// @brief Limit slice to given length.
+/// @param s       Slice to truncate.
+/// @param maximum Maximum number of items in slice.
+/// @return Truncated slice.
+template<typename T> constexpr inline
+Slice<T> trim(Slice<T> s, size_t amount);
+
 /// @brief Set all items in slice to given value.
 /// @param s     Slice to modify.
 /// @param value Value to set items.
@@ -1411,6 +1425,25 @@ char32_t *Slice<char32_t>::begin() {
 constexpr inline
 char32_t *Slice<char32_t>::end() {
     return this->ptr + this->len;
+}
+
+template<typename T> constexpr inline
+Slice<T> truncate(Slice<T> s, size_t maximum) {
+    auto result = s;
+    if(result.len > maximum) {
+        result.len = maximum;
+    }
+    return result;
+}
+
+template<typename T> constexpr inline
+Slice<T> trim(Slice<T> s, size_t amount) {
+    if(amount > s.len) {
+        amount = s.len;
+    }
+    auto result = s;
+    result.len -= amount;
+    return result;
 }
 
 template<typename T> inline
